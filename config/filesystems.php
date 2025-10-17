@@ -39,7 +39,7 @@ return [
         'uploads' => [
             'driver' => 'local',
             'root' => storage_path('app/uploads'),
-            'url' => env('APP_URL') . '/storage/app/uploads',
+            'url' => '/storage/app/uploads',
             'visibility' => 'public',
             'throw' => false,
         ],
@@ -47,7 +47,7 @@ return [
         'media' => [
             'driver' => 'local',
             'root' => storage_path('app/media'),
-            'url' => env('APP_URL') . '/storage/app/media',
+            'url' => '/storage/app/media',
             'visibility' => 'public',
             'throw' => false,
         ],
@@ -55,7 +55,7 @@ return [
         'resources' => [
             'driver' => 'local',
             'root' => storage_path('app/resources'),
-            'url' => env('APP_URL') . '/storage/app/resources',
+            'url' => '/storage/app/resources',
             'visibility' => 'public',
             'throw' => false,
         ],
