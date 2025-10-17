@@ -1,0 +1,11 @@
+columns:
+    name:
+        label: Tên
+        type: text
+        searchable: true
+        sortable: true
+    parent_id:
+        label: 'Cấp bậc'
+        type: text
+        select: name
+        relation: parent

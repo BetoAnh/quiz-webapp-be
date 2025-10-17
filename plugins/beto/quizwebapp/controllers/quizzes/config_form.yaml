@@ -1,0 +1,10 @@
+name: Quizzes
+form: $/beto/quizwebapp/models/quiz/fields.yaml
+modelClass: Beto\Quizwebapp\Models\Quiz
+defaultRedirect: beto/quizwebapp/quizzes
+create:
+    redirect: 'beto/quizwebapp/quizzes/update/:id'
+    redirectClose: beto/quizwebapp/quizzes
+update:
+    redirect: beto/quizwebapp/quizzes
+    redirectClose: beto/quizwebapp/quizzes

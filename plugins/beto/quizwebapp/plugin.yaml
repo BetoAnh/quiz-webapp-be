@@ -1,0 +1,24 @@
+plugin:
+    name: 'beto.quizwebapp::lang.plugin.name'
+    description: 'beto.quizwebapp::lang.plugin.description'
+    author: Beto
+    icon: oc-icon-question-circle
+    homepage: ''
+navigation:
+    main-menu-item:
+        label: QuizWebApp
+        url: beto/quizwebapp/quizzes
+        icon: icon-question
+        sideMenu:
+            side-menu-item:
+                label: Categories
+                url: beto/quizwebapp/category
+                icon: icon-list-alt
+            side-menu-item2:
+                label: Quiz
+                url: beto/quizwebapp/quizzes
+                icon: icon-question-circle
+            side-menu-item3:
+                label: 'Học vấn'
+                url: beto/quizwebapp/levelcontroller
+                icon: icon-book

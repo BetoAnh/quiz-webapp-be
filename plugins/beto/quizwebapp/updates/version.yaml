@@ -1,0 +1,18 @@
+v1.0.1:
+    - 'Initialize plugin'
+v1.0.2:
+    - 'Created tables beto_quizwebapp_quizzes and beto_quizwebapp_questions'
+    - builder_table_create_beto_quizwebapp_quizzes.php
+    - builder_table_create_beto_quizwebapp_questions.php
+v1.0.3:
+    - 'Created table beto_quizwebapp_categories'
+    - builder_table_create_beto_quizwebapp_categories.php
+v1.0.4:
+    - 'Updated table beto_quizwebapp_quizzes'
+    - builder_table_update_beto_quizwebapp_quizzes.php
+v1.0.5:
+    - 'Created table beto_quizwebapp_levels'
+    - builder_table_create_beto_quizwebapp_levels.php
+v1.0.6:
+    - 'Updated table beto_quizwebapp_quizzes'
+    - builder_table_update_beto_quizwebapp_quizzes_2.php

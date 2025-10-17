@@ -1,0 +1,20 @@
+fields:
+    name:
+        label: Tên
+        span: auto
+        type: text
+    parent:
+        label: 'Cấp độ'
+        nameFrom: name
+        descriptionFrom: description
+        span: auto
+        emptyOption: '------'
+        type: relation
+    order_index:
+        label: 'Thứ tự'
+        span: auto
+        type: number
+    code:
+        label: Code
+        span: auto
+        type: text

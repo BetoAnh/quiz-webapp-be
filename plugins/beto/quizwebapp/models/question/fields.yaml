@@ -1,0 +1,23 @@
+fields:
+    text:
+        label: 'Câu hỏi'
+        span: auto
+        disabled: 0
+        readOnly: 1
+        type: text
+    correct_id:
+        label: 'Đáp án đúng (ID)'
+        span: auto
+        type: number
+    options:
+        label: 'Đáp án'
+        span: full
+        type: datatable
+        readOnly: 1
+        columns:
+            id:
+                title: ID
+                readOnly: 1
+            text:
+                title: 'Nội dung'
+                readOnly: 1

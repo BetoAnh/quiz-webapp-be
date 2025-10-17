@@ -1,0 +1,10 @@
+name: LevelController
+form: $/beto/quizwebapp/models/level/fields.yaml
+modelClass: Beto\Quizwebapp\Models\Level
+defaultRedirect: beto/quizwebapp/levelcontroller
+create:
+    redirect: 'beto/quizwebapp/levelcontroller/update/:id'
+    redirectClose: beto/quizwebapp/levelcontroller
+update:
+    redirect: beto/quizwebapp/levelcontroller
+    redirectClose: beto/quizwebapp/levelcontroller

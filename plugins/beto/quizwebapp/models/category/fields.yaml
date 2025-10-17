@@ -1,0 +1,35 @@
+fields:
+    name:
+        label: Name
+        span: auto
+        required: 1
+        type: text
+    slug:
+        label: Slug
+        span: auto
+        required: 1
+        preset:
+            field: name
+            type: slug
+        type: text
+    description:
+        label: Description
+        size: small
+        span: full
+        type: richeditor
+    parent:
+        label: 'Parent Category'
+        nameFrom: name
+        descriptionFrom: description
+        span: auto
+        emptyOption: '--Chọn parent category--'
+        type: relation
+    parent_id:
+        label: Text
+        span: auto
+        hidden: 1
+        disabled: 0
+        preset:
+            field: parent
+            type: ''
+        type: text

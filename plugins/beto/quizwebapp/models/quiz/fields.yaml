@@ -1,0 +1,64 @@
+fields:
+    title:
+        label: Title
+        span: auto
+        type: text
+    slug:
+        label: Slug
+        span: auto
+        preset:
+            field: title
+            type: slug
+        type: text
+    description:
+        label: Description
+        span: full
+        size: small
+        type: textarea
+    author:
+        label: 'Created by'
+        nameFrom: first_name
+        descriptionFrom: description
+        emptyOption: '--Auth--'
+        span: auto
+        type: relation
+    category:
+        label: Category
+        span: auto
+        nameFrom: name
+        descriptionFrom: description
+        emptyOption: '---Chọn Category---'
+        type: relation
+    visibility:
+        label: Visibility
+        options:
+            private: Private
+            public: Public
+        span: auto
+        type: radio
+    level:
+        label: Level
+        span: auto
+        nameFrom: name
+        descriptionFrom: description
+        emptyOption: '------'
+        type: relation
+    questions:
+        label: 'Danh sách câu hỏi'
+        span: full
+        type: relation
+        controller:
+            label: 'Câu hỏi'
+            list: ~/plugins/beto/quizwebapp/models/question/columns.yaml
+            form: ~/plugins/beto/quizwebapp/models/question/fields.yaml
+        manage:
+            form: ~/plugins/beto/quizwebapp/models/question/fields.yaml
+            list: ~/plugins/beto/quizwebapp/models/question/columns.yaml
+            readOnly: true
+            showSearch: true
+        view:
+            showSearch: true
+            list: ~/plugins/beto/quizwebapp/models/question/columns.yaml
+            toolbarButtons: false
+
+    

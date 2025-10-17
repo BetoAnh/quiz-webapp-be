@@ -1,0 +1,11 @@
+columns:
+    text:
+        label: 'Câu hỏi'
+        type: text
+        searchable: true
+        invisible: false
+        sortable: true
+    id:
+        label: ID
+        type: number
+        searchable: false

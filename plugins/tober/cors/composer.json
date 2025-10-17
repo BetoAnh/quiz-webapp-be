@@ -1,0 +1,15 @@
+{
+    "name": "tober/cors-plugin",
+    "type": "october-plugin",
+    "description": "October CMS Cross Origin Resource Sharing",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tober",
+            "email": "tobi.fasanok@gmail.com"
+        }
+    ],
+    "require": {
+        "composer/installers": "~1.0"
+    }
+}

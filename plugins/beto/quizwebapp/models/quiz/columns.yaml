@@ -1,0 +1,12 @@
+columns:
+    title:
+        label: Title
+        type: text
+        searchable: true
+        invisible: false
+        sortable: true
+    created_at:
+        label: 'Ngày tạo'
+        type: datetime
+        searchable: false
+        sortable: true

@@ -1,0 +1,10 @@
+name: Category
+form: $/beto/quizwebapp/models/category/fields.yaml
+modelClass: Beto\Quizwebapp\Models\Category
+defaultRedirect: beto/quizwebapp/category
+create:
+    redirect: 'beto/quizwebapp/category/update/:id'
+    redirectClose: beto/quizwebapp/category
+update:
+    redirect: beto/quizwebapp/category
+    redirectClose: beto/quizwebapp/category

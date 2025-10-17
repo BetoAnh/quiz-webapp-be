@@ -1,0 +1,35 @@
+columns:
+    id:
+        label: ID
+        type: number
+        searchable: false
+        sortable: true
+    created_at:
+        label: created_at
+        type: datetime
+        sortable: true
+    updated_at:
+        label: updated_at
+        type: datetime
+        sortable: true
+    name:
+        label: name
+        type: text
+        searchable: true
+        invisible: false
+        sortable: true
+    slug:
+        label: slug
+        type: text
+        sortable: true
+    parent_id:
+        label: parent_id
+        type: text
+        searchable: true
+        sortable: true
+        select: name
+        relation: parent
+    description:
+        label: description
+        type: text
+        sortable: true
