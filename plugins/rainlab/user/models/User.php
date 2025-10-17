@@ -157,8 +157,7 @@ class User extends Model implements Authenticatable, CanResetPassword
      * @var array hasMany relations
      */
     public $hasMany = [
-        'activity_log' => [UserLog::class, 'delete' => true],
-        'quizzes' => [\Beto\Quizwebapp\Models\Quiz::class, 'key' => 'author_id'],
+        'activity_log' => [UserLog::class, 'delete' => true]
     ];
 
     /**

@@ -1,6 +1,11 @@
-<?php namespace Beto\Quizwebapp;
+<?php
+namespace Beto\Quizwebapp;
 
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use System\Classes\PluginBase;
+use RainLab\User\Models\User;
+use Beto\Quizwebapp\Models\Quiz;
+use Beto\Quizwebapp\Http\Middleware\CustomCorsMiddleware;
 
 /**
  * Plugin class
@@ -19,6 +24,13 @@ class Plugin extends PluginBase
      */
     public function boot()
     {
+        /** @var HttpKernel $kernel */
+        $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
+        $kernel->prependMiddleware(CustomCorsMiddleware::class);
+
+        User::extend(function ($model) {
+            $model->hasMany['quizzes'] = [Quiz::class, 'key' => 'author_id'];
+        });
     }
 
     /**
