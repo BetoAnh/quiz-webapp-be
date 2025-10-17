@@ -36,6 +36,21 @@ Route::group([
         ]);
     });
 
+    Route::get('/test-openrouter', function () {
+        try {
+            $ch = curl_init('https://openrouter.ai/api/v1/models');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            $res = curl_exec($ch);
+            if ($res === false) {
+                return ['ok' => false, 'error' => curl_error($ch)];
+            }
+            return ['ok' => true, 'body' => substr($res, 0, 200)];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    });
+
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
