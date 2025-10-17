@@ -171,17 +171,6 @@ class QuizGenerator
             $text
             ";
 
-        // Gọi OpenAI API
-        // $response = $client->chat()->create([
-        //     'model' => 'gpt-4o-mini',
-        //     'messages' => [
-        //         ['role' => 'user', 'content' => $prompt],
-        //     ],
-        //     'temperature' => 0.7,
-        //     'max_tokens' => 4096,
-        // ]);
-
-        // ✅ Gọi OpenRouter (chọn model miễn phí)
         try {
             $response = $client->chat()->create([
                 'model' => 'google/gemma-2-9b-it',  //hoặc 'google/gemma-2-9b-it', 'meta-llama/llama-3.1-8b-instruct'

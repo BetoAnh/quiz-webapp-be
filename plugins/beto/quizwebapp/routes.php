@@ -23,6 +23,19 @@ Route::group([
         return response('', 200);
     })->where('any', '.*');
 
+    Route::get('/check-ext', function () {
+        $extensions = ['mbstring', 'zip', 'xml', 'libxml', 'dom'];
+        $missing = [];
+        foreach ($extensions as $ext) {
+            if (!extension_loaded($ext)) {
+                $missing[] = $ext;
+            }
+        }
+        return response()->json([
+            'missing_extensions' => $missing ?: '✅ Tất cả extension đã bật'
+        ]);
+    });
+
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
@@ -81,6 +94,10 @@ Route::group([
             ]);
 
         } catch (\Throwable $e) {
+            \Log::error('Generate quiz error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'error' => 'Lỗi máy chủ: ' . $e->getMessage()
             ], 500);
