@@ -94,20 +94,24 @@ class QuizGenerator
     {
         // $client = OpenAI::client(env('OPENAI_API_KEY'));
         // $warning = null;
+        \Log::info('🚀 [fromText] Bắt đầu tạo quiz', [
+            'text_length' => strlen($text),
+            'numQuestions' => $numQuestions
+        ]);
+        try {
+            $client = OpenAI::factory()
+                ->withApiKey(env('OPENROUTER_API_KEY'))
+                ->withBaseUri('https://openrouter.ai/api/v1')
+                ->make();
+            $warning = null;
 
-        $client = OpenAI::factory()
-            ->withApiKey(env('OPENROUTER_API_KEY'))
-            ->withBaseUri('https://openrouter.ai/api/v1')
-            ->make();
-        $warning = null;
-
-        if (mb_strlen($text, 'UTF-8') > self::MAX_TEXT_LEN) {
-            $text = mb_substr($text, 0, self::MAX_TEXT_LEN, 'UTF-8');
-            $warning = "⚠️ Nội dung quá dài, đã cắt bớt để phù hợp giới hạn.";
-        }
-        // Prompt tạo quiz
-        $prompt = !empty($numQuestions)
-            ? "Phân tích và tạo khoảng $numQuestions câu hỏi trắc nghiệm từ nội dung sau
+            if (mb_strlen($text, 'UTF-8') > self::MAX_TEXT_LEN) {
+                $text = mb_substr($text, 0, self::MAX_TEXT_LEN, 'UTF-8');
+                $warning = "⚠️ Nội dung quá dài, đã cắt bớt để phù hợp giới hạn.";
+            }
+            // Prompt tạo quiz
+            $prompt = !empty($numQuestions)
+                ? "Phân tích và tạo khoảng $numQuestions câu hỏi trắc nghiệm từ nội dung sau
             (nếu thấy không đủ nội dung, có thể sinh ít hơn không nhất thiết phải đủ số lượng câu hỏi).
             Mỗi câu hỏi gồm:
             - text: nội dung câu hỏi
@@ -138,7 +142,7 @@ class QuizGenerator
             --- Nội dung ---
             $text
             "
-            : "Phân tích nội dung sau và tạo ra *một câu hỏi trắc nghiệm cho mỗi ý hoặc kiến thức độc lập có thể kiểm tra được*.
+                : "Phân tích nội dung sau và tạo ra *một câu hỏi trắc nghiệm cho mỗi ý hoặc kiến thức độc lập có thể kiểm tra được*.
             Không bỏ sót thông tin nào đáng hỏi.
             Số lượng câu hỏi do bạn tự quyết định dựa trên nội dung.
             Mỗi câu hỏi gồm:
@@ -171,7 +175,6 @@ class QuizGenerator
             $text
             ";
 
-        try {
             $response = $client->chat()->create([
                 'model' => 'google/gemma-2-9b-it',  //hoặc 'google/gemma-2-9b-it', 'meta-llama/llama-3.1-8b-instruct'
                 'messages' => [
@@ -180,42 +183,53 @@ class QuizGenerator
                 'temperature' => 0.7,
                 'max_tokens' => 4096,
             ]);
-        } catch (\Exception $e) {
+
+            $content = $response['choices'][0]['message']['content'] ?? '';
+            \Log::info('🧾 [fromText] Raw content (trích 500 ký tự)', [
+                'preview' => substr($content, 0, 500)
+            ]);
+            preg_match('/\{[\s\S]*\}/', $content, $matches);
+            $jsonPart = $matches[0] ?? $content;
+            $data = json_decode($jsonPart, true);
+
+            if (!$data || !isset($data['questions'])) {
+                $data = [
+                    'title' => '',
+                    'description' => '',
+                    'visibility' => 'public',
+                    'questions' => []
+                ];
+            }
+
+            foreach ($data['questions'] as $i => &$q) {
+                $q['id'] = $i;
+                foreach ($q['options'] ?? [] as $j => &$opt) {
+                    $opt['id'] = $j;
+                }
+            }
+
+            if (!empty($numQuestions)) {
+                $actual = count($data['questions']);
+                if ($actual < $numQuestions) {
+                    $warning .= "\n⚠️ Chỉ tạo được $actual/$numQuestions câu hỏi (tài liệu có thể quá ngắn hoặc không đủ nội dung).";
+                }
+            }
+
+            return [
+                'quiz' => $data,
+                'warning' => $warning
+            ];
+
+        } catch (\Throwable $e) {
+            \Log::error('💥 [fromText] Lỗi khi gọi AI', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return [
                 'quiz' => null,
-                'warning' => "❌ Lỗi gọi API: " . $e->getMessage()
+                'warning' => "❌ Lỗi AI: " . $e->getMessage()
             ];
         }
-
-        $content = $response['choices'][0]['message']['content'] ?? '';
-        $data = json_decode($content, true);
-
-        if (!$data || !isset($data['questions'])) {
-            $data = [
-                'title' => '',
-                'description' => '',
-                'visibility' => 'public',
-                'questions' => []
-            ];
-        }
-
-        foreach ($data['questions'] as $i => &$q) {
-            $q['id'] = $i;
-            foreach ($q['options'] ?? [] as $j => &$opt) {
-                $opt['id'] = $j;
-            }
-        }
-
-        if (!empty($numQuestions)) {
-            $actual = count($data['questions']);
-            if ($actual < $numQuestions) {
-                $warning .= "\n⚠️ Chỉ tạo được $actual/$numQuestions câu hỏi (tài liệu có thể quá ngắn hoặc không đủ nội dung).";
-            }
-        }
-
-        return [
-            'quiz' => $data,
-            'warning' => $warning
-        ];
     }
 }
