@@ -6,6 +6,8 @@
 
     RewriteEngine On
 
+    ## Clever Cloud HTTPS fix: tell PHP that the request is actually HTTPS
+    SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     ##
     ## You may need to uncomment the following line for some hosting environments,
     ## if you have installed to a subdirectory, enter the name here also.
