@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Cache;
-use Tober\Cors\Http\Middleware\CorsMiddleware;
 use Beto\Quizwebapp\Controllers\AuthController;
 use Beto\Quizwebapp\Controllers\JwtMiddleware;
 use Beto\Quizwebapp\Controllers\QuizController;
@@ -11,142 +10,47 @@ use Beto\Quizwebapp\Controllers\SearchController;
 use Beto\Quizwebapp\Controllers\CategoryController;
 use Beto\Quizwebapp\Controllers\ApiLevelController;
 use Beto\Quizwebapp\Controllers\HomeController;
-use Beto\Quizwebapp\Classes\QuizGenerator;
-use Illuminate\Http\Request;
+use Beto\Quizwebapp\Controllers\QuizGenController;
+use Beto\Quizwebapp\Controllers\QuizTempController;
+use Beto\Quizwebapp\Controllers\UserQuizController;
+use Beto\Quizwebapp\Controllers\JwtOptionalMiddleware;
 
 Route::group([
     'prefix' => 'api',
-    'middleware' => [CorsMiddleware::class]
 ], function () {
 
-    Route::options('{any}', function () {
-        return response('', 200);
-    })->where('any', '.*');
-
-    Route::get('/check-ext', function () {
-        $extensions = ['mbstring', 'zip', 'xml', 'libxml', 'dom'];
-        $missing = [];
-        foreach ($extensions as $ext) {
-            if (!extension_loaded($ext)) {
-                $missing[] = $ext;
-            }
-        }
-        return response()->json([
-            'missing_extensions' => $missing ?: '✅ Tất cả extension đã bật'
-        ]);
-    });
-
-    Route::get('/test-openrouter', function () {
-        try {
-            $ch = curl_init('https://openrouter.ai/api/v1/models');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            $res = curl_exec($ch);
-            if ($res === false) {
-                return ['ok' => false, 'error' => curl_error($ch)];
-            }
-            return ['ok' => true, 'body' => substr($res, 0, 200)];
-        } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => $e->getMessage()];
-        }
-    });
-
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::post('/register', [AuthController::class, 'register']);
-
     Route::get('/quizzes', [QuizController::class, 'index']);
-
     Route::get('/users/{id}', [UserController::class, 'getById']);
     Route::get('/users/username/{username}', [UserController::class, 'getByUsername']);
-
     Route::get('/search', [SearchController::class, 'search']);
-
-    // 📘 Trang chủ: danh sách quiz mới nhất và nổi bật
     Route::get('/home/latest', [HomeController::class, 'latest']);
     Route::get('/home/featured', [HomeController::class, 'featured']);
-
-    Route::get('/categories', function () {
-        return Cache::remember('categories_tree', 60 * 60, function () {
-            return app(CategoryController::class)->categories();
-        });
-    });
-
     Route::get('/categories/{id}', [CategoryController::class, 'categoryDetail']);
-
-    Route::get('/quizzes/{id}', [QuizController::class, 'show']);
-
-    Route::get('/levels', function () {
-        return Cache::remember('levels_tree', 60 * 60, function () {
-            return app(ApiLevelController::class)->apiLevels();
-        });
+    Route::get('/categories', [CategoryController::class, 'categories']);
+    Route::get('/levels', [ApiLevelController::class, 'apiLevels']);
+    Route::middleware([JwtOptionalMiddleware::class])->group(function () {
+        Route::get('/quizzes/{id}', [QuizController::class, 'show']);
     });
-
-    Route::post('/generate-quiz', function (Request $request) {
-        try {
-            if (!$request->hasFile('file')) {
-                return response()->json(['error' => 'Không có file tải lên.'], 400);
-            }
-
-            $file = $request->file('file');
-
-            // ✅ Validate file (truyền file, KHÔNG truyền path)
-            $validation = QuizGenerator::validateFile($file);
-
-            if (!$validation['valid']) {
-                return response()->json(['error' => $validation['error']], 400);
-            }
-
-            $text = $validation['text'];
-            $numQuestions = $request->input('numQuestions');
-
-            $result = QuizGenerator::fromText($text, $numQuestions);
-
-            return response()->json([
-                'quiz' => $result['quiz'],
-                'warning' => $validation['warning'] ?? $result['warning'] ?? null
-            ]);
-
-        } catch (\Throwable $e) {
-            \Log::error('Generate quiz error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => 'Lỗi máy chủ: ' . $e->getMessage()
-            ], 500);
-        }
-    });
-
-
     Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/auth', [AuthController::class, 'auth']);
-
         Route::post('/quizzes', [QuizController::class, 'store']);       // Tạo quiz mới
-        // Xem chi tiết quiz
         Route::put('/quizzes/{id}', [QuizController::class, 'update']);
         Route::patch('/quizzes/{id}', [QuizController::class, 'update']); // optional
-
         Route::delete('/quizzes/{id}', [QuizController::class, 'destroy']); // Xóa quiz
-
         Route::put('/users/profile', [UserController::class, 'updateProfile']);
         Route::put('/users/change-password', [UserController::class, 'changePassword']);
-        // Route::delete('/users/{id}', [UserController::class, 'destroy']);
         Route::get('/myquizzes', [QuizController::class, 'myquizzes']);
+        Route::post('/generate-quiz', [QuizGenController::class, 'generateFromFile']);
+        Route::get('/quiz/temp/{id}', [QuizGenController::class, 'getQuizTemp']);
+        Route::get('/quiz-temps', [QuizTempController::class, 'index']);
+        Route::get('/quiz-temps/{id}', [QuizTempController::class, 'show']);
+        Route::post('/quiz-temps', [QuizTempController::class, 'store']);
+        Route::delete('/quiz-temps/{id}', [QuizTempController::class, 'destroy']);
+        Route::post('/user/quizzes/start-learning', [UserQuizController::class, 'startLearning']);
+        Route::get('/user/quizzes/recent', [UserQuizController::class, 'recent']);
     });
-});
-
-Route::get('/test-openai-key', function () {
-    $apiKey = env('OPENAI_API_KEY');
-    try {
-        $client = OpenAI::client($apiKey);
-        $response = $client->chat()->create([
-            'model' => 'gpt-5-nano',
-            'messages' => [['role' => 'user', 'content' => 'Hello test!']],
-        ]);
-        return ['ok' => true, 'key' => $apiKey, 'reply' => $response['choices'][0]['message']['content']];
-    } catch (\Exception $e) {
-        return ['ok' => false, 'key' => $apiKey, 'error' => $e->getMessage()];
-    }
 });

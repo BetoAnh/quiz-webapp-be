@@ -15,12 +15,18 @@ class CustomCorsMiddleware
      */
     public function handle($request, Closure $next)
     {
+        logger('CORS HIT', [
+            'method' => $request->method(),
+            'path' => $request->path(),
+            'origin' => $request->headers->get('Origin'),
+        ]);
+
         $defaultOrigin = '*';
         $defaultHeaders = 'Authorization, Content-Type';
         $defaultMethods = 'GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH';
 
-        $originConfig = config('tober.cors.origin', $defaultOrigin);
-        $enabled = config('tober.cors.enabled', false);
+        $originConfig = config('beto.quizwebapp.origin', $defaultOrigin);
+        $enabled = config('beto.quizwebapp.enabled', false);
 
         if (!$enabled) {
             $originConfig = '*';
@@ -36,9 +42,9 @@ class CustomCorsMiddleware
 
         $headers = [
             'Access-Control-Allow-Origin' => $origin,
-            'Access-Control-Allow-Headers' => config('tober.cors.headers', $defaultHeaders),
-            'Access-Control-Allow-Methods' => config('tober.cors.methods', $defaultMethods),
-            'Access-Control-Allow-Credentials' => 'true', // bạn muốn thêm dòng này
+            'Access-Control-Allow-Headers' => config('beto.quizwebapp.headers', $defaultHeaders),
+            'Access-Control-Allow-Methods' => config('beto.quizwebapp.methods', $defaultMethods),
+            'Access-Control-Allow-Credentials' => 'true',
         ];
 
         if ($request->isMethod('OPTIONS')) {
@@ -47,5 +53,6 @@ class CustomCorsMiddleware
 
         $response = $next($request);
         return $response->withHeaders($headers);
+
     }
 }

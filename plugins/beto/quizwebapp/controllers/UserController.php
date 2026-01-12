@@ -5,6 +5,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use RainLab\User\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Beto\Quizwebapp\Models\UserQuizRecent;
 
 class UserController extends Controller
 {
@@ -127,5 +128,4 @@ class UserController extends Controller
             ], 500);
         }
     }
-
 }

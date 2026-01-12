@@ -16,3 +16,21 @@ v1.0.5:
 v1.0.6:
     - 'Updated table beto_quizwebapp_quizzes'
     - builder_table_update_beto_quizwebapp_quizzes_2.php
+v1.0.7:
+    - 'Created table beto_quizwebapp_quiz_temp'
+    - builder_table_create_beto_quizwebapp_quiz_temp.php
+v1.0.8:
+    - 'Updated table beto_quizwebapp_quiz_temp'
+    - builder_table_update_beto_quizwebapp_quiz_temp.php
+v1.0.9:
+    - 'Updated table beto_quizwebapp_quiz_temp'
+    - builder_table_update_beto_quizwebapp_quiz_temp_2.php
+v1.0.10:
+    - 'Updated table beto_quizwebapp_quiz_temp'
+    - builder_table_update_beto_quizwebapp_quiz_temp_3.php
+v1.0.11:
+    - 'Created table beto_quizwebapp_ai_quota'
+    - builder_table_create_beto_quizwebapp_ai_quota.php
+v1.0.12:
+    - 'Created table beto_quizwebapp_user_quiz_recent'
+    - builder_table_create_beto_quizwebapp_user_quiz_recent.php

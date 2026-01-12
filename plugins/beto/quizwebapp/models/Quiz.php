@@ -3,6 +3,7 @@ namespace Beto\Quizwebapp\Models;
 
 use Model;
 use RainLab\User\Models\User;
+use Cache;
 
 class Quiz extends Model
 {
@@ -29,4 +30,24 @@ class Quiz extends Model
     public $rules = [
         'title' => 'required|string|max:255'
     ];
+
+    public function afterSave()
+    {
+        Cache::forever('quiz:version', microtime(true));
+    }
+
+    public function afterDelete()
+    {
+        Cache::forever('quiz:version', microtime(true));
+    }
+
+    public function scopePublicOrOwner($query, $user)
+    {
+        return $query->where(function ($q) use ($user) {
+            $q->where('visibility', 'public');
+            if ($user) {
+                $q->orWhere('author_id', $user->id);
+            }
+        });
+    }
 }

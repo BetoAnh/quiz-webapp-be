@@ -6,6 +6,8 @@ use System\Classes\PluginBase;
 use RainLab\User\Models\User;
 use Beto\Quizwebapp\Models\Quiz;
 use Beto\Quizwebapp\Http\Middleware\CustomCorsMiddleware;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * Plugin class
@@ -17,6 +19,10 @@ class Plugin extends PluginBase
      */
     public function register()
     {
+        $this->registerConsoleCommand(
+            'quiz.dispatch.cleanup',
+            \Beto\Quizwebapp\Console\DispatchCleanupJob::class
+        );
     }
 
     /**
@@ -26,10 +32,19 @@ class Plugin extends PluginBase
     {
         /** @var HttpKernel $kernel */
         $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
-        $kernel->prependMiddleware(CustomCorsMiddleware::class);
+
+        $kernel->pushMiddleware(CustomCorsMiddleware::class);
 
         User::extend(function ($model) {
             $model->hasMany['quizzes'] = [Quiz::class, 'key' => 'author_id'];
+        });
+
+        RateLimiter::for('login', function ($request) {
+            $email = (string) $request->input('email');
+
+            return Limit::perMinute(5)->by(
+                strtolower($email) . '|' . $request->ip()
+            );
         });
     }
 

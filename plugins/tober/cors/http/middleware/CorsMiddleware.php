@@ -1,5 +1,4 @@
-<?php
-namespace Tober\Cors\Http\Middleware;
+<?php namespace Tober\Cors\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
@@ -19,40 +18,57 @@ class CorsMiddleware
         $defaultHeaders = 'Authorization, Content-Type';
         $defaultMethods = 'GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH';
 
-        // đọc config chuẩn
-        $originConfig = config('tober.cors.origin', $defaultOrigin);
-        $enabled = config('tober.cors.enabled', false);
+        $origin = config('tober.cors::origin', $defaultOrigin);
 
-        // nếu disable thì trả về *
-        if (!$enabled) {
-            $originConfig = '*';
+        if (!config('tober.cors::enabled', false)) {
+            $origin = '*';
         }
 
-        // tách nhiều origin
-        $allowedOrigins = array_map('trim', explode(',', $originConfig));
+        if (str_contains($origin, ',')) {
+            $allowedOrigins = explode(',', $origin);
+        }
+        else {
+            $allowedOrigins = [$origin];
+        }
 
-        // origin của request (trình duyệt sẽ gửi header này)
-        $requestOrigin = $request->headers->get('Origin');
+        $origin = collect($allowedOrigins)->first();
 
-        $origin = $defaultOrigin;
+        $requestOrigin = request()->headers->get('referer') ?? null;
 
-        if ($requestOrigin && in_array($requestOrigin, $allowedOrigins)) {
-            $origin = $requestOrigin;
+        if ($requestOrigin) {
+            $parsedRequestOrigin = parse_url($requestOrigin);
+
+            if ($parsedRequestOrigin && isset($parsedRequestOrigin['scheme']) && isset($parsedRequestOrigin['host'])) {
+                $requestOrigin = $parsedRequestOrigin['scheme'] . '://' . $parsedRequestOrigin['host'];
+
+                $allowedRequestOrigin = collect($allowedOrigins)->filter(function ($allowedOrigin) use ($requestOrigin) {
+                    return $requestOrigin === $allowedOrigin;
+                })->first();
+
+                if ($allowedRequestOrigin) {
+                    if (isset($parsedRequestOrigin['port'])) {
+                        $allowedRequestOrigin .= ':' . $parsedRequestOrigin['port'];
+                    }
+
+                    $origin = $allowedRequestOrigin;
+                }
+            }
         }
 
         $headers = [
-            'Access-Control-Allow-Origin' => $origin,
-            'Access-Control-Allow-Headers' => config('tober.cors.headers', $defaultHeaders),
-            'Access-Control-Allow-Methods' => config('tober.cors.methods', $defaultMethods),
+            'Access-Control-Allow-Origin'  => $origin,
+            'Access-Control-Allow-Headers' => config('tober.cors::headers', $defaultHeaders),
+            'Access-Control-Allow-Methods' => config('tober.cors::methods', $defaultMethods)
         ];
 
-        // xử lý preflight request (OPTIONS)
         if ($request->isMethod('OPTIONS')) {
-            return response('', 200)->withHeaders($headers);
+            return response(null, 200, $headers);
         }
 
-        // các request khác
         $response = $next($request);
-        return $response->withHeaders($headers);
+
+        $response->headers->add($headers);
+
+        return $response;
     }
 }

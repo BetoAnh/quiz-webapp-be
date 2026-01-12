@@ -4,32 +4,33 @@ namespace Beto\Quizwebapp\Controllers;
 use Illuminate\Routing\Controller;
 use Beto\Quizwebapp\Models\Category;
 use Beto\Quizwebapp\Models\Quiz;
+use Cache;
 
 class CategoryController extends Controller
 {
     // API 1: Danh sách category phân theo parent_id// API 1: Danh sách category phân theo parent_id (có id + name của parent)
     public function categories()
     {
-        $categories = Category::all();
+        $tree = Cache::remember('quiz:categories:tree', 86400, function () {
 
-        // Nhóm theo parent_id
-        $grouped = $categories->groupBy('parent_id');
+            $categories = Category::all();
 
-        // Hàm đệ quy để build cây
-        $buildTree = function ($parentId) use (&$buildTree, $grouped) {
-            return ($grouped[$parentId] ?? collect())->map(function ($cat) use ($buildTree) {
-                return [
-                    'id' => $cat->id,
-                    'name' => $cat->name,
-                    'slug' => $cat->slug,
-                    'parent_id' => $cat->parent_id,
-                    'children' => $buildTree($cat->id)
-                ];
-            })->values();
-        };
+            $grouped = $categories->groupBy('parent_id');
 
-        // Bắt đầu từ root (parent_id = null)
-        $tree = $buildTree(null);
+            $buildTree = function ($parentId) use (&$buildTree, $grouped) {
+                return ($grouped[$parentId] ?? collect())->map(function ($cat) use ($buildTree) {
+                    return [
+                        'id' => $cat->id,
+                        'name' => $cat->name,
+                        'slug' => $cat->slug,
+                        'parent_id' => $cat->parent_id,
+                        'children' => $buildTree($cat->id)
+                    ];
+                })->values();
+            };
+
+            return $buildTree(null);
+        });
 
         return response()->json([
             'success' => true,

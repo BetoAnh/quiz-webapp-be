@@ -2,7 +2,7 @@
 namespace Beto\Quizwebapp\Controllers;
 
 use Backend\Classes\Controller;
-use BackendMenu;
+use Cache;
 use Beto\Quizwebapp\Models\Quiz;
 use Beto\Quizwebapp\Models\Question;
 use Illuminate\Http\Request;
@@ -13,7 +13,25 @@ class QuizController extends Controller
 {
     public function index()
     {
-        $quizzes = Quiz::with('author:id,first_name,last_name', 'category:id,name')->get();
+        // 1️⃣ Lấy version từ Redis (do afterSave bump)
+        $version = Cache::get('quiz:version', 0);
+
+        // 2️⃣ Cache key theo version
+        $cacheKey = "quiz:list:v{$version}";
+
+        // 3️⃣ Cache
+        $quizzes = Cache::remember($cacheKey, 3600, function () use ($cacheKey) {
+
+            // 👉 Log để test cache MISS (xong thì xoá)
+            \Log::info('CACHE MISS', ['key' => $cacheKey]);
+
+            return Quiz::with(
+                'author:id,first_name,last_name',
+                'category:id,name'
+            )
+                ->get();
+        });
+
         return response()->json($quizzes);
     }
 
@@ -31,19 +49,24 @@ class QuizController extends Controller
     /**
      * API: Lấy 1 quiz theo id
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
+
         $quiz = Quiz::with([
             'questions',
             'author:id,first_name,last_name',
             'category:id,name',
             'level:id,name,parent_id',
             'level.parent:id,name',
-        ])->find($id);
+        ])
+            ->where('id', $id)
+            ->publicOrOwner($request->user())
+            ->first();
 
         if (!$quiz) {
             return response()->json(['error' => 'Quiz not found'], 404);
         }
+
         return response()->json($quiz);
     }
 

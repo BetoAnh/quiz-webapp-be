@@ -1,5 +1,4 @@
-<?php
-namespace RainLab\User\Models;
+<?php namespace RainLab\User\Models;
 
 use Str;
 use Event;
@@ -73,7 +72,6 @@ class User extends Model implements Authenticatable, CanResetPassword
         'username' => ['required', 'between:2,255', 'unique:users,username,NULL,id,is_guest,false'],
         'password' => ['required:create', 'string', 'confirmed'],
         'avatar' => ['nullable', 'image', 'max:4000'],
-        'notes' => ['nullable', 'string'],
     ];
 
     /**
@@ -100,7 +98,6 @@ class User extends Model implements Authenticatable, CanResetPassword
         'password',
         'password_confirmation',
         'is_guest',
-        'notes',
     ];
 
     /**
@@ -150,14 +147,14 @@ class User extends Model implements Authenticatable, CanResetPassword
         'groups' => [
             UserGroup::class,
             'table' => 'users_groups'
-        ],
+        ]
     ];
 
     /**
      * @var array hasMany relations
      */
     public $hasMany = [
-        'activity_log' => [UserLog::class, 'delete' => true]
+        'activity_log' => [UserLog::class, 'delete' => true],
     ];
 
     /**
@@ -206,7 +203,8 @@ class User extends Model implements Authenticatable, CanResetPassword
     {
         if (is_string($options)) {
             $options = ['default' => $options];
-        } elseif (!is_array($options)) {
+        }
+        elseif (!is_array($options)) {
             $options = [];
         }
 
@@ -215,7 +213,8 @@ class User extends Model implements Authenticatable, CanResetPassword
 
         if ($this->avatar) {
             return $this->avatar->getThumb($size, $size, $options);
-        } else {
+        }
+        else {
             $emailHash = md5(strtolower(trim($this->email)));
             $defaultUrl = urlencode($default);
             return "//www.gravatar.com/avatar/{$emailHash}?s={$size}&d={$defaultUrl}";
@@ -289,7 +288,7 @@ class User extends Model implements Authenticatable, CanResetPassword
         }
 
         // When the username is not used, the email is substituted.
-        if (!$this->username || ($this->isDirty('email') && $this->getOriginal('email') == $this->username)) {
+        if ($this->shouldRegenerateUsername()) {
             $this->username = $this->email;
         }
     }
@@ -301,7 +300,8 @@ class User extends Model implements Authenticatable, CanResetPassword
     {
         if ($this->is_guest) {
             $this->primary_group = UserGroup::getGuestGroup();
-        } elseif (!$this->primary_group_id) {
+        }
+        elseif (!$this->primary_group_id) {
             $this->primary_group = UserGroup::getRegisteredGroup();
         }
     }
@@ -449,7 +449,7 @@ class User extends Model implements Authenticatable, CanResetPassword
      */
     public function generatePassword()
     {
-        $this->password = $this->password_confirmation = Str::random(12) . rand(10, 99);
+        $this->password = $this->password_confirmation = Str::random(12).rand(10, 99);
     }
 
     /**
@@ -538,5 +538,26 @@ class User extends Model implements Authenticatable, CanResetPassword
     protected function sendInvitation()
     {
         $this->sendConfirmRegistrationNotification();
+    }
+
+    /**
+     * shouldRegenerateUsername checks if the username should be reset to the email address
+     * this happens when the username field is not used but is required for logging in
+     */
+    protected function shouldRegenerateUsername(): bool
+    {
+        // There is no email source to use
+        // Return false to fail validation and/or avoid data loss
+        if (!$this->email) {
+            return false;
+        }
+
+        // Safe: The username is empty
+        if (!$this->username) {
+            return true;
+        }
+
+        // Safe: Email has changed and was previously used as username
+        return $this->isDirty('email') && (string) $this->getOriginal('email') === (string) $this->username;
     }
 }

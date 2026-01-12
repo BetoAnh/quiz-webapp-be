@@ -8,6 +8,8 @@ use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
 use Carbon\Carbon;
 use RainLab\User\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -117,8 +119,17 @@ class AuthController extends Controller
 
 
     /** -------- LOGOUT -------- */
-    public function logout()
+    public function logout(Request $request)
     {
+        $token = $request->cookie('authToken');
+
+        if ($token) {
+            // Xóa cache user liên quan đến token
+            $cacheKey = 'jwt_user_' . md5($token);
+            Cache::store('redis')->forget($cacheKey);
+        }
+
+        // Xóa cookie trên client
         return response()->json(['message' => 'Logged out'])
             ->cookie('authToken', '', -1, '/', null, $this->isSecure(), true, false, 'Strict');
     }
@@ -140,7 +151,6 @@ class AuthController extends Controller
             'last_name' => $user->last_name,
         ]);
     }
-
 
     /** -------- HELPER -------- */
     private function generateToken($userId)

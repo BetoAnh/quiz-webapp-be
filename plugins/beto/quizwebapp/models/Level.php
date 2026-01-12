@@ -2,6 +2,7 @@
 namespace Beto\Quizwebapp\Models;
 
 use Model;
+use Cache;
 
 /**
  * Model
@@ -28,4 +29,16 @@ class Level extends Model
      */
     public $rules = [
     ];
+
+    public function afterSave()
+    {
+        Cache::forget('quiz:levels:tree');
+        Cache::forever('quiz:version', microtime(true));
+    }
+
+    public function afterDelete()
+    {
+        Cache::forget('quiz:levels:tree');
+        Cache::forever('quiz:version', microtime(true));
+    }
 }

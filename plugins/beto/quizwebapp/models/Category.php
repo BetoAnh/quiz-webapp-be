@@ -2,6 +2,7 @@
 namespace Beto\Quizwebapp\Models;
 
 use Model;
+use Cache;
 
 /**
  * Model
@@ -25,5 +26,17 @@ class Category extends Model
      */
     public $rules = [
     ];
+
+    public function afterSave()
+    {
+        Cache::forget('quiz:categories:tree');
+        Cache::forever('quiz:version', microtime(true));
+    }
+
+    public function afterDelete()
+    {
+        Cache::forget('quiz:categories:tree');
+        Cache::forever('quiz:version', microtime(true));
+    }
 
 }
