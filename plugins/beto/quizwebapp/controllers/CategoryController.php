@@ -43,27 +43,46 @@ class CategoryController extends Controller
     // API 2: Chi tiết category + quiz thuộc category đó
     public function categoryDetail($id)
     {
-        $category = Category::find($id);
+        $cacheKey = "quiz:category:$id:detail";
 
-        if (!$category) {
+        return Cache::remember($cacheKey, 600, function () use ($id) {
+
+            $category = Category::select('id', 'name', 'slug')
+                ->find($id);
+
+            if (!$category) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Category not found'
+                ], 404);
+            }
+
+            $quizzes = Quiz::query()
+                ->select([
+                        'id',
+                        'title',
+                        'description',
+                        'visibility',
+                        'author_id',
+                        'category_id',
+                        'created_at',
+                    ])
+                ->with([
+                        'category:id,name'
+                    ])
+                ->where('category_id', $id)
+                ->where('visibility', 'public')
+                ->orderByDesc('created_at')
+                ->get();
+
             return response()->json([
-                'success' => false,
-                'message' => 'Category not found'
-            ], 404);
-        }
-
-        // Lấy quiz public kèm theo thông tin category
-        $quizzes = Quiz::with('category:id,name')
-            ->where('category_id', $id)
-            ->where('visibility', 'public')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'category' => $category,
-                'quizzes' => $quizzes
-            ]
-        ]);
+                'success' => true,
+                'data' => [
+                    'category' => $category,
+                    'quizzes' => $quizzes
+                ]
+            ]);
+        });
     }
+
 }

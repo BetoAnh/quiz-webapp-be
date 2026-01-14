@@ -23,6 +23,15 @@ class Quiz extends Model
         'level' => [Level::class, 'key' => 'level_id'],
     ];
 
+    public $belongsToMany = [
+        'favorited_by' => [
+            User::class,
+            'table' => 'beto_quizwebapp_quiz_favorites',
+            'key' => 'quiz_id',
+            'otherKey' => 'user_id',
+        ],
+    ];
+
     public $hasMany = [
         'questions' => [Question::class]
     ];
@@ -33,12 +42,33 @@ class Quiz extends Model
 
     public function afterSave()
     {
-        Cache::forever('quiz:version', microtime(true));
+        $this->flushCategoryCache();
     }
 
     public function afterDelete()
     {
-        Cache::forever('quiz:version', microtime(true));
+        $this->flushCategoryCache();
+    }
+
+    protected $originalCategoryId;
+
+    public function beforeSave()
+    {
+        $this->originalCategoryId = $this->getOriginal('category_id');
+    }
+
+    protected function flushCategoryCache()
+    {
+        if (!empty($this->category_id)) {
+            Cache::forget("quiz:category:{$this->category_id}:detail");
+        }
+
+        if (
+            !empty($this->originalCategoryId)
+            && $this->originalCategoryId !== $this->category_id
+        ) {
+            Cache::forget("quiz:category:{$this->originalCategoryId}:detail");
+        }
     }
 
     public function scopePublicOrOwner($query, $user)

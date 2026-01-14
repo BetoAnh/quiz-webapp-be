@@ -52,5 +52,8 @@ Route::group([
         Route::delete('/quiz-temps/{id}', [QuizTempController::class, 'destroy']);
         Route::post('/user/quizzes/start-learning', [UserQuizController::class, 'startLearning']);
         Route::get('/user/quizzes/recent', [UserQuizController::class, 'recent']);
+        Route::post('/quiz/{id}/save', 'QuizFavoriteController@saveQuiz');
+        Route::delete('/quiz/{id}/save', 'QuizFavoriteController@unsaveQuiz');
+        Route::get('/quiz/saved', 'QuizFavoriteController@savedQuizzes');
     });
 });

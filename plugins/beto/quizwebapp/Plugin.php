@@ -46,6 +46,17 @@ class Plugin extends PluginBase
                 strtolower($email) . '|' . $request->ip()
             );
         });
+
+        User::extend(function ($model) {
+
+            $model->belongsToMany['favorite_quizzes'] = [
+                Quiz::class,
+                'table' => 'beto_quizwebapp_quiz_favorites',
+                'key' => 'user_id',
+                'otherKey' => 'quiz_id',
+            ];
+
+        });
     }
 
     /**
