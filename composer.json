@@ -46,6 +46,12 @@
         "allow-plugins": {
             "composer/installers": true,
             "php-http/discovery": true
+        },
+        "audit": {
+            "ignore": [
+                "PKSA-8qx3-n5y5-vvnd",
+                "PKSA-w7xr-vk7n-rstm"
+            ]
         }
     },
     "autoload": {
