@@ -8,32 +8,33 @@ use Beto\Quizwebapp\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Beto\Quizwebapp\Models\QuizFavorite;
 
 class QuizController extends Controller
 {
-    public function index()
-    {
-        // 1️⃣ Lấy version từ Redis (do afterSave bump)
-        $version = Cache::get('quiz:version', 0);
+    // public function index()
+    // {
+    //     // 1️⃣ Lấy version từ Redis (do afterSave bump)
+    //     $version = Cache::get('quiz:version', 0);
 
-        // 2️⃣ Cache key theo version
-        $cacheKey = "quiz:list:v{$version}";
+    //     // 2️⃣ Cache key theo version
+    //     $cacheKey = "quiz:list:v{$version}";
 
-        // 3️⃣ Cache
-        $quizzes = Cache::remember($cacheKey, 3600, function () use ($cacheKey) {
+    //     // 3️⃣ Cache
+    //     $quizzes = Cache::remember($cacheKey, 3600, function () use ($cacheKey) {
 
-            // 👉 Log để test cache MISS (xong thì xoá)
-            \Log::info('CACHE MISS', ['key' => $cacheKey]);
+    //         // 👉 Log để test cache MISS (xong thì xoá)
+    //         \Log::info('CACHE MISS', ['key' => $cacheKey]);
 
-            return Quiz::with(
-                'author:id,first_name,last_name',
-                'category:id,name'
-            )
-                ->get();
-        });
+    //         return Quiz::with(
+    //             'author:id,first_name,last_name',
+    //             'category:id,name'
+    //         )
+    //             ->get();
+    //     });
 
-        return response()->json($quizzes);
-    }
+    //     return response()->json($quizzes);
+    // }
 
     public function myquizzes(Request $request)
     {
@@ -51,16 +52,31 @@ class QuizController extends Controller
      */
     public function show(Request $request, $id)
     {
+        $user = $request->user();
 
-        $quiz = Quiz::with([
-            'questions',
-            'author:id,first_name,last_name',
-            'category:id,name',
-            'level:id,name,parent_id',
-            'level.parent:id,name',
-        ])
+        $quiz = Quiz::query()
+            ->with([
+                'questions',
+                'author:id,first_name,last_name',
+                'category:id,name',
+                'level:id,name,parent_id',
+                'level.parent:id,name',
+                'recent_learners' => function ($q) {
+                    $q->select('users.id', 'users.first_name', 'users.last_name')
+                        ->orderByDesc('beto_quizwebapp_user_quiz_recent.last_learned_at')
+                        ->limit(5);
+                },
+            ])
+            ->addSelect([
+                'is_saved' => $user
+                    ? QuizFavorite::selectRaw('1')
+                        ->whereColumn('quiz_id', 'beto_quizwebapp_quizzes.id')
+                        ->where('user_id', $user->id)
+                        ->limit(1)
+                    : DB::raw('0')
+            ])
             ->where('id', $id)
-            ->publicOrOwner($request->user())
+            ->publicOrOwner($user)
             ->first();
 
         if (!$quiz) {

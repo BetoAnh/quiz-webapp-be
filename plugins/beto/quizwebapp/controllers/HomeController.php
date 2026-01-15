@@ -3,22 +3,31 @@ namespace Beto\Quizwebapp\Controllers;
 
 use Backend\Classes\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Beto\Quizwebapp\Models\Quiz;
+use Beto\Quizwebapp\Models\QuizFavorite;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
     /**
-     * Lấy danh sách quiz mới nhất
+     * Quiz mới nhất
      */
     public function latest(Request $request)
     {
-        $limit = $request->get('limit', 10);
+        $limit = (int) $request->get('limit', 10);
 
-        $quizzes = Quiz::with(['author:id,first_name,last_name', 'category:id,name'])
-            ->where('visibility', 'public')
-            ->orderBy('created_at', 'desc')
-            ->take($limit)
-            ->get();
+        $quizzes = Cache::tags(['home_latest'])->remember(
+            "latest_{$limit}",
+            now()->addMinutes(5),
+            function () use ($limit) {
+                return Quiz::with(['author:id,first_name,last_name', 'category:id,name'])
+                    ->where('visibility', 'public')
+                    ->latest()
+                    ->take($limit)
+                    ->get();
+            }
+        );
 
         return response()->json([
             'success' => true,
@@ -27,25 +36,29 @@ class HomeController extends Controller
     }
 
     /**
-     * Lấy danh sách quiz nổi bật (giả lập)
-     * Ở đây ta có thể giả lập logic "nổi bật" dựa trên các yếu tố:
-     * - số lượng người học cao
-     * - được gắn cờ nổi bật (featured)
-     * - hoặc đơn giản là random chọn từ quiz công khai
+     * Quiz nổi bật (nhiều lượt lưu nhất)
      */
     public function featured(Request $request)
     {
-        $limit = $request->get('limit', 10);
+        $limit = (int) $request->get('limit', 10);
 
-        $quizzes = Quiz::with(['author:id,first_name,last_name', 'category:id,name'])
-            ->where('visibility', 'public')
-            ->inRandomOrder() // giả lập quiz nổi bật
-            ->take($limit)
-            ->get();
+        $quizzes = Cache::tags(['home_featured'])->remember(
+            "featured_{$limit}",
+            now()->addMinutes(10),
+            function () use ($limit) {
+                return Quiz::with(['author:id,first_name,last_name', 'category:id,name'])
+                    ->where('visibility', 'public')
+                    ->withCount('favorited_by')
+                    ->orderByDesc('favorited_by_count')
+                    ->take($limit)
+                    ->get();
+            }
+        );
 
         return response()->json([
             'success' => true,
             'data' => $quizzes
         ]);
     }
+
 }

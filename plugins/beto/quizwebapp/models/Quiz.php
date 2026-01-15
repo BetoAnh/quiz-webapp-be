@@ -29,6 +29,15 @@ class Quiz extends Model
             'table' => 'beto_quizwebapp_quiz_favorites',
             'key' => 'quiz_id',
             'otherKey' => 'user_id',
+            'timestamps' => true,
+        ],
+        'recent_learners' => [
+            User::class,
+            'table' => 'beto_quizwebapp_user_quiz_recent',
+            'key' => 'quiz_id',
+            'otherKey' => 'user_id',
+            'timestamps' => false,
+            'pivot' => ['last_learned_at'],
         ],
     ];
 
@@ -43,11 +52,13 @@ class Quiz extends Model
     public function afterSave()
     {
         $this->flushCategoryCache();
+        $this->flushHomeCache();
     }
 
     public function afterDelete()
     {
         $this->flushCategoryCache();
+        $this->flushHomeCache();
     }
 
     protected $originalCategoryId;
@@ -55,6 +66,12 @@ class Quiz extends Model
     public function beforeSave()
     {
         $this->originalCategoryId = $this->getOriginal('category_id');
+    }
+
+    protected function flushHomeCache()
+    {
+        Cache::tags(['home_latest'])->flush();
+        Cache::tags(['home_featured'])->flush();
     }
 
     protected function flushCategoryCache()

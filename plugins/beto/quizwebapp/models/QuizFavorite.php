@@ -4,6 +4,7 @@ namespace Beto\Quizwebapp\Models;
 use Model;
 use Beto\Quizwebapp\Models\Quiz;
 use RainLab\User\Models\User;
+use Cache;
 
 /**
  * Model
@@ -32,5 +33,20 @@ class QuizFavorite extends Model
      */
     public $rules = [
     ];
+
+    protected function flushFeaturedCache()
+    {
+        Cache::tags(['home_featured'])->flush();
+    }
+
+    public function afterSave()
+    {
+        $this->flushFeaturedCache();
+    }
+
+    public function afterDelete()
+    {
+        $this->flushFeaturedCache();
+    }
 
 }

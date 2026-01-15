@@ -14,6 +14,7 @@ use Beto\Quizwebapp\Controllers\QuizGenController;
 use Beto\Quizwebapp\Controllers\QuizTempController;
 use Beto\Quizwebapp\Controllers\UserQuizController;
 use Beto\Quizwebapp\Controllers\JwtOptionalMiddleware;
+use Beto\Quizwebapp\Controllers\QuizFavoriteController;
 
 Route::group([
     'prefix' => 'api',
@@ -23,7 +24,7 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::post('/register', [AuthController::class, 'register']);
-    Route::get('/quizzes', [QuizController::class, 'index']);
+    // Route::get('/quizzes', [QuizController::class, 'index']);
     Route::get('/users/{id}', [UserController::class, 'getById']);
     Route::get('/users/username/{username}', [UserController::class, 'getByUsername']);
     Route::get('/search', [SearchController::class, 'search']);
@@ -52,8 +53,8 @@ Route::group([
         Route::delete('/quiz-temps/{id}', [QuizTempController::class, 'destroy']);
         Route::post('/user/quizzes/start-learning', [UserQuizController::class, 'startLearning']);
         Route::get('/user/quizzes/recent', [UserQuizController::class, 'recent']);
-        Route::post('/quiz/{id}/save', 'QuizFavoriteController@saveQuiz');
-        Route::delete('/quiz/{id}/save', 'QuizFavoriteController@unsaveQuiz');
-        Route::get('/quiz/saved', 'QuizFavoriteController@savedQuizzes');
+        Route::post('/quiz/{id}/save', [QuizFavoriteController::class, 'toggle']);
+        Route::get('/quiz/saved', [QuizFavoriteController::class, 'savedQuizzes']);
+        Route::get('/quiz/{quizId}/is-saved', [QuizFavoriteController::class, 'checksaved']);
     });
 });
